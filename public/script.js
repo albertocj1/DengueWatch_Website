@@ -121,7 +121,7 @@ function renderRiskChart() {
 
 async function updateMapRisks() {
     try {
-        const response = await fetch('http://localhost:8000/api/latest-forecast');
+        const response = await fetch('https://denguewatch-api.onrender.com/api/latest-forecast');
         if (!response.ok) throw new Error("Failed to fetch risk data");
 
         const riskDataFromDB = await response.json();
@@ -243,7 +243,7 @@ async function initializeApp() {
 
             try {
                 const res = await fetch(
-                    "http://localhost:8000/preprocessing?weeks_ahead=1",
+                    "https://denguewatch-api.onrender.com/preprocessing?weeks_ahead=1",
                     { method: "POST", body: formData }
                 );
 
@@ -729,7 +729,7 @@ async function loadCSVPreview() {
     const tbody = document.getElementById('preview-table');
 
     try {
-        const res = await fetch('http://localhost:8000/api/raw-csv-data');
+        const res = await fetch('https://denguewatch-api.onrender.com/api/raw-csv-data');
         const { data } = await res.json();
 
         tbody.innerHTML = '';
