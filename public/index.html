@@ -355,7 +355,7 @@ const riskColors = {
 
 async function updateMapRisks() {
     try {
-        const response = await fetch('http://localhost:8000/api/latest-forecast');
+        const response = await fetch('https://denguewatch-api.onrender.com/api/latest-forecast');
         if (!response.ok) throw new Error("Failed to fetch risk data");
 
         const riskDataFromDB = await response.json();
@@ -428,7 +428,7 @@ async function populateCasesTable() {
     if (!tableBody) return;
 
     try {
-        const response = await fetch("http://127.0.0.1:8000/api/cases-latest");
+        const response = await fetch("https://denguewatch-api.onrender.com/api/cases-latest");
         const casesData = await response.json();
 
         tableBody.innerHTML = "";
