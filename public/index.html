@@ -428,13 +428,29 @@ async function populateCasesTable() {
     if (!tableBody) return;
 
     try {
-        const response = await fetch("https://denguewatch-api.onrender.com/api/cases-latest");
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-        const casesData = await response.json();
+        // Fetch latest cases
+        const casesResponse = await fetch("https://denguewatch-api.onrender.com/api/cases-latest");
+        const casesData = await casesResponse.json();
 
+        // Fetch latest risk levels
+        const riskResponse = await fetch("https://denguewatch-api.onrender.com/api/risk-latest");
+        const riskData = await riskResponse.json();
+
+        // Merge cases + risk by city
+        const mergedData = casesData.map(item => {
+            const riskItem = riskData.find(r => r.city === item.city);
+            return {
+                ...item,
+                risk_level: riskItem ? riskItem.risk_level : "Unknown",
+                created_at: item.last_updated
+            };
+        });
+
+        // Clear table
         tableBody.innerHTML = "";
 
-        casesData.forEach(item => {
+        // Populate table
+        mergedData.forEach(item => {
             const row = document.createElement("tr");
             row.className = "hover:bg-gray-50";
 
@@ -450,7 +466,7 @@ async function populateCasesTable() {
                     ${item.city}
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-500">
-                    ${item.cases ?? "-"}
+                    ${item.total_cases ?? "-"}
                 </td>
                 <td class="px-6 py-4">
                     <span class="px-2 inline-flex text-xs font-semibold rounded-full ${riskBadgeClass}">
@@ -458,7 +474,7 @@ async function populateCasesTable() {
                     </span>
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-500">
-                    ${item.last_updated ?? "-"}
+                    ${item.created_at ? new Date(item.created_at).toLocaleDateString() : "-"}
                 </td>
             `;
 
@@ -469,10 +485,10 @@ async function populateCasesTable() {
         console.error("Failed to load cases table:", error);
     }
 }
+
 window.addEventListener('DOMContentLoaded', () => {
-    populateCasesTable();
     updateMapRisks();
-    
+    populateCasesTable();
 });
 
 </script>
