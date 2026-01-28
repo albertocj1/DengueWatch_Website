@@ -421,7 +421,7 @@ async function populateCasesTable() {
 
     try {
         // Fetch latest cases
-        const casesResponse = await fetch("https://denguewatch-api.onrender.com:8000/api/cases-latest");
+        const casesResponse = await fetch("https://denguewatch-api.onrender.com/api/cases-latest");
         const casesData = await casesResponse.json();
 
         // Fetch latest risk levels
