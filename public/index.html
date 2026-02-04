@@ -17,26 +17,13 @@
         }
     </script>
 <style>
-       .hero-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 400px;
-  background: radial-gradient(
-    circle at center,
-    rgba(255,255,255,0.12),
-    rgba(0,0,0,0.25)
-  );
-  pointer-events: none;
-  z-index: 1;
-}
-
-#vanta-globe > div {
-  position: relative;
-  z-index: 2;
-}
-
+        #vanta-globe {
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #2563eb;
+        }
     </style>
 </head>
 <!-- Three.js -->
@@ -91,10 +78,7 @@
             <h1 class="text-4xl md:text-5xl font-bold mb-4">Dengue Outbreak Risk Tracker</h1>
             <p class="text-xl mb-8">Real-time monitoring for NCR regions</p>
         </div>
-    
     </div>
-    <div class="hero-overlay"></div>
-
 
     
     <!-- Dashboard Grid -->
@@ -508,21 +492,6 @@ window.addEventListener('DOMContentLoaded', () => {
 <script src="https://cdn.jsdelivr.net/npm/vanta/dist/vanta.globe.min.js"></script>
 
 <script>
-const effects = ["NET", "GLOBE"];
-let index = 0;
-
-setInterval(() => {
-  vantaEffect.destroy();
-  vantaEffect = VANTA[effects[index]]({
-    el: "#vanta-globe",
-    backgroundColor: 0x2563eb
-  });
-  index = (index + 1) % effects.length;
-}, 20000);
-</script>
-
-
-<script>
 let vantaEffect;
 
 function loadVanta() {
@@ -542,7 +511,6 @@ function loadVanta() {
 }
 
 loadVanta();
-
 
 </script>
 
