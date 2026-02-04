@@ -17,15 +17,34 @@
         }
     </script>
 <style>
-        #vanta-globe {
-            height: 400px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #2563eb;
-        }
+       .hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 400px;
+  background: radial-gradient(
+    circle at center,
+    rgba(255,255,255,0.12),
+    rgba(0,0,0,0.25)
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+#vanta-globe > div {
+  position: relative;
+  z-index: 2;
+}
+
     </style>
 </head>
+<!-- Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+
+<!-- Vanta Effects -->
+<script src="https://cdn.jsdelivr.net/npm/vanta/dist/vanta.net.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vanta/dist/vanta.globe.min.js"></script>
 
 <body>
     <!-- Navbar -->
@@ -72,7 +91,11 @@
             <h1 class="text-4xl md:text-5xl font-bold mb-4">Dengue Outbreak Risk Tracker</h1>
             <p class="text-xl mb-8">Real-time monitoring for NCR regions</p>
         </div>
+    
     </div>
+    <div class="hero-overlay"></div>
+
+
     
     <!-- Dashboard Grid -->
     <div class="container mx-auto px-4 py-12">
@@ -475,33 +498,52 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 
+
 </script>
-<!-- Load Three.js -->
+<!-- Three.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
 
-<!-- Load Vanta Globe -->
+<!-- Vanta Effects -->
+<script src="https://cdn.jsdelivr.net/npm/vanta/dist/vanta.net.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vanta/dist/vanta.globe.min.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/vanta/dist/vanta.net.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vanta/dist/vanta.waves.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vanta/dist/vanta.fog.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vanta/dist/vanta.halo.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vanta/dist/vanta.cells.min.js"></script>
 <script>
-    VANTA.GLOBE({
-        el: "#vanta-bg",
-        mouseControls: true,
-        touchControls: true,
-        gyroControls: false,
-        minHeight: 200.00,
-        minWidth: 200.00,
-        scale: 1.00,
-        scaleMobile: 1.00,
-        color: 0x1e40af,
-        color2: 0x3b82f6,
-        size: 1.20,
-        backgroundColor: 0xf3f4f6
-    });
+const effects = ["NET", "GLOBE"];
+let index = 0;
+
+setInterval(() => {
+  vantaEffect.destroy();
+  vantaEffect = VANTA[effects[index]]({
+    el: "#vanta-globe",
+    backgroundColor: 0x2563eb
+  });
+  index = (index + 1) % effects.length;
+}, 20000);
+</script>
+
+
+<script>
+let vantaEffect;
+
+function loadVanta() {
+  if (vantaEffect) vantaEffect.destroy();
+
+  vantaEffect = VANTA.NET({
+    el: "#vanta-globe",
+    mouseControls: true,
+    touchControls: true,
+    gyroControls: false,
+    color: 0x93c5fd,          // light blue lines
+    backgroundColor: 0x2563eb, // Tailwind blue-600
+    points: 10.0,
+    maxDistance: 22.0,
+    spacing: 18.0
+  });
+}
+
+loadVanta();
+
+
 </script>
 
 
