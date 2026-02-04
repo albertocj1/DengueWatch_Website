@@ -1018,7 +1018,6 @@ function previewLocalCSV(file) {
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
     loadAlertsFromAPI();
-    setupAlertModalDynamic();
     initializeFilter();
     
     // Populate cases table after a short delay to ensure SVG paths are loaded
