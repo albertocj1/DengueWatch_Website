@@ -24,6 +24,21 @@
             justify-content: center;
             background-color: #2563eb;
         }
+
+        /* Make SVG regions interactive */
+        .risk-path {
+             cursor: pointer;
+            transition: fill 0.25s ease, stroke-width 0.25s ease, transform 0.15s ease;
+             transform-origin: center;
+        }
+
+        /* Hover effect */
+        .risk-path:hover {
+            stroke-width: 1.2;
+            transform: scale(1.015);
+            filter: brightness(1.08);
+        }
+
     </style>
 </head>
 <!-- Three.js -->
