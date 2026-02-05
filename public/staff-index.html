@@ -24,8 +24,21 @@
             justify-content: center;
             background-color: #2563eb;
         }
+
+        .hero-section {
+            position: relative;
+            text-align: center;
+            padding: 100px 20px;
+        }
+
     </style>
 </head>
+<!-- Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+
+<!-- Vanta Effects -->
+<script src="https://cdn.jsdelivr.net/npm/vanta/dist/vanta.net.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vanta/dist/vanta.globe.min.js"></script>
 
 <body>
     <!-- Navbar -->
@@ -39,7 +52,7 @@
                 <a href="staff-index.html" class="hover:text-indigo-300">Dashboard</a>
                 <a href="staff-alerts.html" class="hover:text-indigo-300">Alerts</a>
                 <a href="staff-prevention.html" class="hover:text-indigo-300">Prevention</a>
-    
+                
                 <a href="#" id="logoutBtn" class="hover:text-indigo-300">Logout</a>
             </div>
 <button class="mobile-menu-button md:hidden">
@@ -52,7 +65,7 @@
                 <a href="staff-index.html" class="hover:text-indigo-300">Dashboard</a>
                 <a href="staff-alerts.html" class="hover:text-indigo-300">Alerts</a>
                 <a href="staff-prevention.html" class="hover:text-indigo-300">Prevention</a>
-            
+               
                 <a href="#" id="logoutBtn" class="hover:text-indigo-300">Logout</a>
 
             </div>
@@ -65,13 +78,14 @@
             <p class="text-xl mb-8">Real-time monitoring for NCR regions</p>
         </div>
     </div>
+
     
     <!-- Dashboard Grid -->
     <div class="container mx-auto px-4 py-12">
 
         
         <div class="dashboard-grid">
-    
+   
             <!-- Risk Overview Card -->
             <div class="card">
                 <h2 class="text-xl font-bold mb-4">NCR Dengue Risk Overview</h2>
@@ -262,7 +276,7 @@
                             </div>
                             <div class="flex items-center">
                                 <div class="w-3 h-3 bg-yellow-400 rounded-full mr-2"></div>
-                                <span>Med</span>
+                                <span>Moderate</span>
                             </div>
                             <div class="flex items-center">
                                 <div class="w-3 h-3 bg-red-400 rounded-full mr-2"></div>
@@ -285,8 +299,8 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cases</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Level</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recent Cases</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Predicted Risk Level</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
                             </tr>
                         </thead>
@@ -457,13 +471,47 @@ async function populateCasesTable() {
     }
 }
 
+
+
 window.addEventListener('DOMContentLoaded', () => {
     updateMapRisks();
     populateCasesTable();
 });
 
-</script>
 
+
+
+
+</script>
+<!-- Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+
+<!-- Vanta Effects -->
+<script src="https://cdn.jsdelivr.net/npm/vanta/dist/vanta.net.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vanta/dist/vanta.globe.min.js"></script>
+
+<script>
+let vantaEffect;
+
+function loadVanta() {
+  if (vantaEffect) vantaEffect.destroy();
+
+  vantaEffect = VANTA.NET({
+    el: "#vanta-globe",
+    mouseControls: true,
+    touchControls: true,
+    gyroControls: false,
+    color: 0x93c5fd,          // light blue lines
+    backgroundColor: 0x2563eb, // Tailwind blue-600
+    points: 10.0,
+    maxDistance: 22.0,
+    spacing: 18.0
+  });
+}
+
+loadVanta();
+
+</script>
 
 
 </body>
