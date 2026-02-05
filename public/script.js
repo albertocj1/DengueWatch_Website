@@ -604,7 +604,7 @@ function setupAlertModalDynamic() {
 
 // Weather update function
 function updateWeather(city = "Manila") {
-    const apiKey = "fd5f51d2101b472aa31195301262101"; // Replace with your WeatherAPI key
+    const apiKey = "953425c7fdb84ef3be3165514260502"; // Replace with your WeatherAPI key
     fetch(`https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${encodeURIComponent(city)}&days=14`)
         .then(response => response.json())
         .then(data => {
