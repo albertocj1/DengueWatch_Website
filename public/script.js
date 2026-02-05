@@ -340,80 +340,93 @@ async function initializeApp() {
         document.head.appendChild(style);
     }
     // Map hover card for NCR map
-    const mapContainer = document.getElementById('map-container');
-    const ncrMap = document.getElementById('ncr-map');
+    const mapContainer = document.getElementById("map-container");
+    const ncrMap = document.getElementById("ncr-map");
 
     if (mapContainer && ncrMap) {
-        // Create hover card
-        const mapCard = document.createElement('div');
-        mapCard.id = 'map-hover-card';
-        mapCard.style.position = 'absolute';
-        mapCard.style.pointerEvents = 'none';
-        mapCard.style.opacity = '0';
-        mapCard.style.transform = 'translateY(10px)';
-        mapCard.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
-        mapCard.style.background = 'white';
-        mapCard.style.borderRadius = '12px';
-        mapCard.style.boxShadow = '0 12px 28px rgba(0,0,0,0.25)';
-        mapCard.style.padding = '12px 16px';
-        mapCard.style.fontSize = '14px';
-        mapCard.style.zIndex = '50';
 
-        mapContainer.appendChild(mapCard);
+        // Create hover card ONCE
+        const mapCard = document.createElement("div");
+        mapCard.id = "map-hover-card";
+        Object.assign(mapCard.style, {
+            position: "absolute",
+            pointerEvents: "none",
+            opacity: "0",
+            background: "white",
+            borderRadius: "12px",
+            boxShadow: "0 12px 28px rgba(0,0,0,0.25)",
+            padding: "12px 16px",
+            fontSize: "14px",
+            zIndex: "9999",
+            transition: "opacity 0.15s ease"
+        });
 
-        const paths = ncrMap.querySelectorAll('path');
+        document.body.appendChild(mapCard);
 
-        paths.forEach(path => {
-            let originalNextSibling = null;
+        let currentHovered = null;
 
-            path.addEventListener('mouseenter', () => {
-                // Bring hovered path to top
-                originalNextSibling = path.nextSibling;
-                ncrMap.appendChild(path);
+    ncrMap.addEventListener("mousemove", (e) => {
 
-                // Card content (uses SVG data attributes)
-                const name = path.getAttribute('city') || 'Unknown Area';
-                const risk = path.getAttribute('risk_level') || 'Low';
+        const pt = ncrMap.createSVGPoint();
+        pt.x = e.clientX;
+        pt.y = e.clientY;
 
-                mapCard.innerHTML = `
-                    <div style="font-weight:600;">${name}</div>
-                    <div style="font-size:12px; margin-top:4px;">
-                        Risk Level: <strong>${risk}</strong><br>
-                    </div>
-                `;
+        const ctm = ncrMap.getScreenCTM();
+        if (!ctm) return;
 
-                mapCard.style.opacity = '1';
-                mapCard.style.transform = 'translateY(0)';
-            });
+        const svgPoint = pt.matrixTransform(ctm.inverse());
 
-            path.addEventListener('mousemove', (e) => {
-                const rect = mapContainer.getBoundingClientRect();
-                mapCard.style.left = `${e.clientX - rect.left + 16}px`;
-                mapCard.style.top = `${e.clientY - rect.top + 16}px`;
-            });
+        let hoveredPath = null;
 
-            path.addEventListener('mouseleave', () => {
-                // Restore original SVG order
-                if (originalNextSibling) {
-                    ncrMap.insertBefore(path, originalNextSibling);
-                }
+        ncrMap.querySelectorAll(".risk-path").forEach(path => {
+            if (path.isPointInFill(svgPoint)) {
+                hoveredPath = path;
+            }
+        });
 
-                // Hide card
-                mapCard.style.opacity = '0';
-                mapCard.style.transform = 'translateY(10px)';
-            });
+        // RESET previous lifted region
+        if (currentHovered && currentHovered !== hoveredPath) {
+            currentHovered.style.stroke = "";
+            currentHovered.style.strokeWidth = "";
+            currentHovered.style.filter = "";
+        }
+
+        // APPLY lift to new region
+        if (hoveredPath) {
+
+            currentHovered = hoveredPath;
+
+            hoveredPath.style.stroke = "#000";
+            hoveredPath.style.strokeWidth = "2";
+            hoveredPath.style.filter = "drop-shadow(0 0 6px rgba(0,0,0,0.4))";
+
+            const name = hoveredPath.getAttribute("city") || "Unknown Area";
+            const risk = hoveredPath.getAttribute("risk_level") || "Low";
+
+            mapCard.innerHTML = `
+                <div style="font-weight:600;">${name}</div>
+                <div style="font-size:12px; margin-top:4px;">
+                    Risk Level: <strong>${risk}</strong>
+                </div>
+            `;
+
+            mapCard.style.opacity = "1";
+            mapCard.style.left = e.pageX + 15 + "px";
+            mapCard.style.top  = e.pageY + 15 + "px";
+
+        } else {
+            mapCard.style.opacity = "0";
+            currentHovered = null;
+        }
+    });
+
+
+        ncrMap.addEventListener("mouseleave", () => {
+            mapCard.style.opacity = "0";
         });
     }
 
-    fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        previewLocalCSV(file);
-    });
-
 }
-
 window.addEventListener('DOMContentLoaded', updateMapRisks);
 
 async function loadAlertsFromAPI() {
