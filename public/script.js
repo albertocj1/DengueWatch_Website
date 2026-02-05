@@ -30,7 +30,7 @@ const alertStyles = {
         border: "border-yellow-500",
         badge: "bg-yellow-100 text-yellow-800",
         dot: "bg-yellow-500",
-        label: "MEDIUM ALERT"
+        label: "MODERATE ALERT"
     },
     High: {
         border: "border-red-500",
@@ -170,7 +170,38 @@ async function updateMapRisks() {
         console.error('Error fetching or applying risk data:', err);
     }
 }
+function fetchSunshineDuration() {
+    const meteoblueURL =
+        "https://my.meteoblue.com/packages/clouds-day?apikey=FAViybKsQretjwfS&lat=14.5243&lon=121.079&asl=5&format=json";
+
+    fetch(meteoblueURL)
+        .then(res => res.json())
+        .then(data => {
+            console.log("Meteoblue sunshine:", data);
+
+            if (!data?.data_day?.sunshine_time) {
+                document.getElementById("sunshine-duration").textContent = "N/A";
+                return;
+            }
+
+            // Sunshine time in MINUTES → convert to HOURS
+            const sunshineMinutes = data.data_day.sunshine_time[0];
+            const sunshineHours = sunshineMinutes / 60;
+
+            document.getElementById("sunshine-duration").textContent =
+                sunshineHours.toFixed(1) + " hrs";
+        })
+        .catch(err => {
+            console.error("Meteoblue error:", err);
+            document.getElementById("sunshine-duration").textContent = "N/A";
+        });
+}
+
+
+
 function updateWeather(city = "Manila") {
+    city = city.split(",")[0]; // removes ",PH" if present
+
     const apiKey = "953425c7fdb84ef3be3165514260502"; // Replace with your WeatherAPI key
     fetch(`https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${encodeURIComponent(city)}&days=14`)
         .then(response => response.json())
@@ -191,13 +222,14 @@ function updateWeather(city = "Manila") {
                 dengueRisk = "High";
                 advisory = "Frequent rain expected. Check and eliminate standing water around your area.";
             } else if (rainChance > 30) {
-                dengueRisk = "Medium";
+                dengueRisk = "Moderate";
                 advisory = "Moderate rain probability. Stay alert and continue preventive actions.";
             }
 
             // Update current weather UI
             document.getElementById('rain-probability').textContent = rainProbability;
             document.getElementById('temperature').textContent = `${temperature}°C`;
+    
             document.getElementById('weather-advisory').textContent = advisory;
             document.getElementById('weather-update-time').textContent = new Date().toLocaleTimeString();
 
@@ -237,7 +269,9 @@ function updateWeather(city = "Manila") {
                     </div>
                 `;
             }
+            fetchSunshineDuration();
         })
+        
         .catch(error => {
             console.error("Error fetching weather:", error);
             document.getElementById('rain-probability').textContent = "N/A";
@@ -250,7 +284,6 @@ function updateWeather(city = "Manila") {
             document.getElementById('forecast-weather').innerHTML = '<div class="text-center text-gray-500">Weather data unavailable</div>';
         });
 }
-
 
 
 // Main initialization function
@@ -635,14 +668,14 @@ function setupAlertModalDynamic() {
                 statusIndicator.textContent = riskLevel;
                 statusIndicator.className = `font-bold ${
                     riskLevel === 'CRITICAL' ? 'text-red-500' :
-                    riskLevel === 'MEDIUM' ? 'text-yellow-600' : 'text-green-600'
+                    riskLevel === 'MODERATE' ? 'text-yellow-600' : 'text-green-600'
                 }`;
 
                 const dot = statusIndicator.previousElementSibling;
                 if (dot) {
                     dot.className = `inline-block w-3 h-3 ${
                         riskLevel === 'CRITICAL' ? 'bg-red-500' :
-                        riskLevel === 'MEDIUM' ? 'bg-yellow-500' : 'bg-green-500'
+                        riskLevel === 'MODERATE' ? 'bg-yellow-500' : 'bg-green-500'
                     } rounded-full mr-2`;
                 }
             }
