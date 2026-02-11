@@ -628,120 +628,73 @@ function fetchSunshineDuration() {
 }
 
 
+    function updateWeather(city = "Manila") {
+        city = city.split(",")[0]; // removes ",PH" if present
 
-function updateWeather(city = "Manila") {
-    city = city.split(",")[0]; // removes ",PH" if present
+        const apiKey = "953425c7fdb84ef3be3165514260502"; // Replace with your WeatherAPI key
+        fetch(`https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${encodeURIComponent(city + ", Philippines")}&days=14`)
 
-    const apiKey = "953425c7fdb84ef3be3165514260502"; // Replace with your WeatherAPI key
-    fetch(`https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${encodeURIComponent(city + ", Philippines")}&days=14`)
+            .then(response => response.json())
+            .then(data => {
+                // Current weather
+                const temperature = Math.round(data.current.temp_c);
+                const rainProbability = data.forecast.forecastday[0].day.daily_chance_of_rain + "%";
 
-        .then(response => response.json())
-        .then(data => {
-            // Current weather
-            const temperature = Math.round(data.current.temp_c);
-            const rainProbability = data.forecast.forecastday[0].day.daily_chance_of_rain + "%";
+                // Risk calculation
+                let dengueRisk = "Low";
+                let advisory = "Normal weather conditions. Maintain regular prevention measures.";
+                const rainChance = parseInt(data.forecast.forecastday[0].day.daily_chance_of_rain);
 
-            // Risk calculation
-            let dengueRisk = "Low";
-            let advisory = "Normal weather conditions. Maintain regular prevention measures.";
-            const rainChance = parseInt(data.forecast.forecastday[0].day.daily_chance_of_rain);
+                if (rainChance > 70) {
+                    dengueRisk = "Critical";
+                    advisory = "Very high rain probability increases standing water. Expect increased mosquito activity.";
+                } else if (rainChance > 50) {
+                    dengueRisk = "High";
+                    advisory = "Frequent rain expected. Check and eliminate standing water around your area.";
+                } else if (rainChance > 30) {
+                    dengueRisk = "Moderate";
+                    advisory = "Moderate rain probability. Stay alert and continue preventive actions.";
+                }
 
-            if (rainChance > 70) {
-                dengueRisk = "Critical";
-                advisory = "Very high rain probability increases standing water. Expect increased mosquito activity.";
-            } else if (rainChance > 50) {
-                dengueRisk = "High";
-                advisory = "Frequent rain expected. Check and eliminate standing water around your area.";
-            } else if (rainChance > 30) {
-                dengueRisk = "Moderate";
-                advisory = "Moderate rain probability. Stay alert and continue preventive actions.";
-            }
-
-            // Update current weather UI
-            document.getElementById('rain-probability').textContent = rainProbability;
-            document.getElementById('temperature').textContent = `${temperature}°C`;
-    
-            document.getElementById('weather-advisory').textContent = advisory;
-            document.getElementById('weather-update-time').textContent = new Date().toLocaleTimeString();
-
-            // REAL past weather using Open-Meteo
-            const pastWeekContainer = document.getElementById('past-week-weather');
-            pastWeekContainer.innerHTML = '';
-
-            const lat = data.location.lat;
-            const lon = data.location.lon;
-
-            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=rain&past_days=7&timezone=Asia%2FSingapore`)
-                .then(res => res.json())
-                .then(historyData => {
-
-                    const hourlyTimes = historyData.hourly.time;
-                    const hourlyRain = historyData.hourly.rain;
-
-                    const grouped = {};
-
-                    hourlyTimes.forEach((time, index) => {
-                        const date = time.split("T")[0];
-                        if (!grouped[date]) grouped[date] = 0;
-                        grouped[date] += hourlyRain[index];
-                    });
-
-                    Object.keys(grouped).forEach(dateStr => {
-                        const date = new Date(dateStr);
-                        const day = date.toLocaleDateString('en-US', { weekday: 'short' });
-                        const rainTotal = grouped[dateStr];
-
-                        pastWeekContainer.innerHTML += `
-                            <div class="text-center p-2 border rounded-lg">
-                                <div class="font-medium">${day}</div>
-                                <div class="text-sm text-gray-500">${date.getDate()}/${date.getMonth()+1}</div>
-                                <div class="text-blue-500 font-medium">${rainTotal.toFixed(1)}%</div>
-                                <div class="text-sm">${rainTotal > 10 ? '🌧️' : rainTotal > 3 ? '⛅' : '☀️'}</div>
-                            </div>
-                        `;
-                    });
-                })
-                .catch(err => {
-                    console.error("Open-Meteo history error:", err);
-                    pastWeekContainer.innerHTML =
-                        '<div class="text-center text-gray-500">Past weather unavailable</div>';
-                });
-
-
-
-            // Generate 14-day forecast
-            const forecastContainer = document.getElementById('forecast-weather');
-            forecastContainer.innerHTML = '';
-            for (let i = 0; i < 14; i++) {
-                const forecast = data.forecast.forecastday[i].day;
-                const date = new Date(data.forecast.forecastday[i].date);
-                const day = date.toLocaleDateString('en-US', { weekday: 'short' });
-                
-                forecastContainer.innerHTML += `
-                    <div class="text-center p-2 border rounded-lg">
-                        <div class="font-medium">${day}</div>
-                        <div class="text-sm text-gray-500">${date.getDate()}/${date.getMonth()+1}</div>
-                        <div class="text-blue-500 font-medium">${forecast.daily_chance_of_rain.toFixed(1)}%</div>
-                        <div class="text-sm">${forecast.daily_chance_of_rain > 50 ? '🌧️' : forecast.daily_chance_of_rain > 30 ? '⛅' : '☀️'}</div>
-                    </div>
-                `;
-            }
-            fetchSunshineDuration();
-        })
+                // Update current weather UI
+                document.getElementById('rain-probability').textContent = rainProbability;
+                document.getElementById('temperature').textContent = `${temperature}°C`;
         
-        .catch(error => {
-            console.error("Error fetching weather:", error);
-            document.getElementById('rain-probability').textContent = "N/A";
-            document.getElementById('temperature').textContent = "N/A";
-            document.getElementById('dengue-risk').textContent = "Unknown";
-            document.getElementById('weather-advisory').textContent = "Weather data unavailable.";
-            
-            // Show error placeholders for forecast
-            document.getElementById('past-week-weather').innerHTML = '<div class="text-center text-gray-500">Weather data unavailable</div>';
-            document.getElementById('forecast-weather').innerHTML = '<div class="text-center text-gray-500">Weather data unavailable</div>';
-        });
-}
+                document.getElementById('weather-advisory').textContent = advisory;
+                document.getElementById('weather-update-time').textContent = new Date().toLocaleTimeString();
 
+                // Generate 14-day forecast
+                const forecastContainer = document.getElementById('forecast-weather');
+                forecastContainer.innerHTML = '';
+                for (let i = 0; i < 14; i++) {
+                    const forecast = data.forecast.forecastday[i].day;
+                    const date = new Date(data.forecast.forecastday[i].date);
+                    const day = date.toLocaleDateString('en-US', { weekday: 'short' });
+                    
+                    forecastContainer.innerHTML += `
+                        <div class="text-center p-2 border rounded-lg">
+                            <div class="font-medium">${day}</div>
+                            <div class="text-sm text-gray-500">${date.getDate()}/${date.getMonth()+1}</div>
+                            <div class="text-blue-500 font-medium">${forecast.daily_chance_of_rain.toFixed(1)}%</div>
+                            <div class="text-sm">${forecast.daily_chance_of_rain > 50 ? '🌧️' : forecast.daily_chance_of_rain > 30 ? '⛅' : '☀️'}</div>
+                        </div>
+                    `;
+                }
+                fetchSunshineDuration();
+            })
+            
+            .catch(error => {
+                console.error("Error fetching weather:", error);
+                document.getElementById('rain-probability').textContent = "N/A";
+                document.getElementById('temperature').textContent = "N/A";
+                document.getElementById('dengue-risk').textContent = "Unknown";
+                document.getElementById('weather-advisory').textContent = "Weather data unavailable.";
+                
+                // Show error placeholders for forecast
+                document.getElementById('past-week-weather').innerHTML = '<div class="text-center text-gray-500">Weather data unavailable</div>';
+                document.getElementById('forecast-weather').innerHTML = '<div class="text-center text-gray-500">Weather data unavailable</div>';
+            });
+    }
 
 
 // Filter alerts by risk level
