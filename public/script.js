@@ -1,4 +1,8 @@
 let csvUploaded = false;
+
+const REQUIRED_HEADERS = ["YEAR", "MONTH", "DAY", "LAND AREA", "CASES"];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_ROWS = 10000;
 const landAreaToCity = {
     24.98: "MANILA CITY",
     171.71: "QUEZON CITY",
@@ -42,10 +46,73 @@ const alertStyles = {
         border: "border-red-500",
         badge: "bg-red-100 text-red-800",
         dot: "bg-red-500",
-        label: "CRITICAL ALERT"
+        label: "VERY HIGH ALERT"
     }
 };
 
+function validateHeaders(headers) {
+    const missing = REQUIRED_HEADERS.filter(h => !headers.includes(h));
+    if (missing.length) {
+        throw new Error(`Missing required columns: ${missing.join(", ")}`);
+    }
+}
+
+function validateChronological(rows) {
+    const lastDateByArea = {};
+
+    rows.forEach((row, i) => {
+        const landArea = row["LAND AREA"];
+        const date = new Date(
+            Number(row["YEAR"]),
+            Number(row["MONTH"]) - 1,
+            Number(row["DAY"])
+        );
+
+        if (isNaN(date.getTime())) {
+            throw new Error(`Invalid date at row ${i + 2}`);
+        }
+
+        if (lastDateByArea[landArea] && date < lastDateByArea[landArea]) {
+            throw new Error(
+                `Dates for LAND AREA ${landArea} are not in ascending order (row ${i + 2})`
+            );
+        }
+
+        lastDateByArea[landArea] = date;
+    });
+}
+
+function validateCases(rows) {
+    rows.forEach((row, i) => {
+        const cases = Number(row["CASES"]);
+        if (!Number.isFinite(cases) || cases < 0) {
+            throw new Error(`Invalid CASES value at row ${i + 2}`);
+        }
+    });
+}
+
+function validateLandArea(rows) {
+    rows.forEach((row, i) => {
+        const landArea = Number(row["LAND AREA"]);
+        if (!landAreaToCity[landArea]) {
+            throw new Error(
+                `Unknown LAND AREA (${landArea}) at row ${i + 2}`
+            );
+        }
+    });
+}
+
+function validateDuplicates(rows) {
+    const seen = new Set();
+
+    rows.forEach((row, i) => {
+        const key = `${row["LAND AREA"]}-${row["YEAR"]}-${row["MONTH"]}-${row["DAY"]}`;
+        if (seen.has(key)) {
+            throw new Error(`Duplicate record detected at row ${i + 2}`);
+        }
+        seen.add(key);
+    });
+}
 
 const fileInput = document.getElementById("csv-upload");
 let selectedFile = null;
@@ -243,23 +310,59 @@ async function initializeApp() {
             });
         });
 
-        dropzone.addEventListener("drop", e => {
-            const files = e.dataTransfer.files;
-            if (files.length) {
-                selectedFile = files[0];
-                fileInput.files = files;
-                previewLocalCSV(selectedFile);
-            }
-        });
+       // DROP EVENT
+dropzone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-        fileInput.addEventListener("change", e => {
-            selectedFile = e.target.files[0];
-        });
+    if (!e.dataTransfer || !e.dataTransfer.files.length) return;
+
+    const file = e.dataTransfer.files[0];
+
+    // Optional: allow only CSV
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+        alert("Only CSV files are allowed.");
+        return;
+    }
+
+    selectedFile = file;
+
+    // Safely update file input
+    if (fileInput) {
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        fileInput.files = dataTransfer.files;
+    }
+
+    previewLocalCSV(file);
+});
+
+
+// FILE INPUT CHANGE
+fileInput.addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+        alert("Only CSV files are allowed.");
+        fileInput.value = "";
+        return;
+    }
+
+    selectedFile = file;
+    previewLocalCSV(file);
+});
+
 
         // Submit → FastAPI
         submitBtn.addEventListener("click", async () => {
             if (!selectedFile) {
                 alert("Please upload a CSV file");
+                return;
+            }
+
+             if (!document.querySelector('#preview-table tr')) {
+                alert("CSV validation failed. Fix errors before submitting.");
                 return;
             }
 
@@ -998,6 +1101,12 @@ async function loadCSVPreview() {
 }
 
 function previewLocalCSV(file) {
+
+    if (file.size > MAX_FILE_SIZE) {
+        alert("CSV file too large (max 5MB)");
+        return;
+    }
+
     const reader = new FileReader();
     const tbody = document.getElementById('preview-table');
 
@@ -1013,15 +1122,36 @@ function previewLocalCSV(file) {
         const headers = lines[0].split(',').map(h => h.trim());
         const dataRows = lines.slice(1);
 
-        tbody.innerHTML = '';
+        if (dataRows.length > MAX_ROWS) {
+            alert("CSV exceeds maximum allowed rows (10,000)");
+            return;
+        }
 
-        dataRows.forEach(line => {
+        const parsedRows = dataRows.map(line => {
             const cols = line.split(',').map(c => c.trim());
             const row = {};
             headers.forEach((h, i) => row[h] = cols[i]);
+            return row;
+        });
 
+        // VALIDATION BLOCK
+        try {
+            validateHeaders(headers);
+            validateChronological(parsedRows);
+            validateCases(parsedRows);
+            validateLandArea(parsedRows);
+            validateDuplicates(parsedRows);
+        } catch (err) {
+            alert(err.message);
+            return;
+        }
+
+        // PREVIEW RENDERING (SAFE NOW)
+        tbody.innerHTML = '';
+
+        parsedRows.forEach(row => {
             const landArea = Number(row["LAND AREA"]);
-            const city = landAreaToCity[landArea] || "Unknown City";
+            const city = landAreaToCity[landArea];
             const date = `${row["YEAR"]}-${String(row["MONTH"]).padStart(2, "0")}-${String(row["DAY"]).padStart(2, "0")}`;
             const cases = Number(row["CASES"]).toFixed(2);
 
@@ -1043,6 +1173,7 @@ function previewLocalCSV(file) {
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
     loadAlertsFromAPI();
+    setupAlertModalDynamic();
     initializeFilter();
     
     // Populate cases table after a short delay to ensure SVG paths are loaded
